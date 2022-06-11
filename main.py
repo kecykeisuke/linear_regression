@@ -122,9 +122,7 @@ if uploaded_file is not None:
                     except:
                         st.write("errorです: ",c,"にカテゴリが含まれている可能性があります。データを確認して、再度データを取り込んでください")
                         st.stop()
-                    df[c] = df[c].astype("float64")
-
-                
+                    df[c] = df[c].astype("float64")                
 
             with st.spinner('実行中...'):   
                 Y = df[target]
@@ -212,8 +210,7 @@ if uploaded_file is not None:
                 permutation_imporatance_result = permutation_imporatance_result*(-1)
                 permutation_imporatance_result.sort_values(by ='importances_mean', inplace=True, ascending=True)
 
-                
-
+            
                 # figure
                 # 精度
                 fig = px.scatter(Result, x="actual",y="prediction",hover_name="id")
