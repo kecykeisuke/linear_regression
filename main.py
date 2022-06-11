@@ -1,6 +1,8 @@
 #モジュールのインポート
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
+import codecs
 import pandas as pd
 from matplotlib import pyplot as plt
 import sweetviz as sv
@@ -15,7 +17,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import math
-
+from base64 import b64encode
 
 
 # タイトルを表示
@@ -27,6 +29,7 @@ st.markdown("簡単に線形モデルを作成するためのツールです。�
 
 st.sidebar.markdown("### 1. データの読み込み")
 uploaded_file = st.sidebar.file_uploader("CSVファイルをドラッグ&ドロップ、またはブラウザから選択してください", type='csv', key='train')
+
 if uploaded_file is not None:
     #データの読込み
     df = pd.read_csv(uploaded_file)
@@ -34,6 +37,7 @@ if uploaded_file is not None:
 
     #object型をcategory型に変更
     df.loc[:, df.dtypes == 'object'] = df.select_dtypes(['object']).apply(lambda x: x.astype('category'))
+    
 
     #ID・目的変数の選択
     st.sidebar.markdown("### 2. ID・目的変数の選択")
@@ -45,24 +49,45 @@ if uploaded_file is not None:
         'IDを選択してください',
         df.columns
     )
+
     st.markdown("# Step 1: データの確認") 
     st.dataframe(df)
-    st.markdown(df.shape) 
+    st.markdown(df.shape)
+
+
 
     
     # EDAの実行
     st.sidebar.markdown("### 3. データの確認")
     st.sidebar.markdown("データの確認を行う場合は、下記の実行ボタンを押してください")
+
     if st.sidebar.button('実行する'):
+
+        # check process    
+        if df[target].isnull().any() == "True":
+            st.write("errorです: 目的変数に欠損が含まれております。欠損が内容にデータを準備してください")
+            st.stop()
+
+
+        if df[target].dtypes != "float64" and df[target].dtypes != "int64":
+            try:
+                df[target] = df[target].astype("float64")
+            except:
+                st.write("errorです: 目的変数にカテゴリが含まれている可能性があります。データを確認し、再度データを取り込んでください")
+                st.stop()
+            df[target] = df[target].astype("float64")
 
         with st.spinner('実行中...'):            
             feature_config = sv.FeatureConfig(skip=[], force_num = [],force_cat=[],force_text=[])
             my_report = sv.analyze(df, target_feat= target,feat_cfg=feature_config, pairwise_analysis="on")
-            my_report.show_html(filepath='EDA.html') # Default arguments will generate to "SWEETVIZ_REPORT.html"
+            my_report.show_html("EDA.html")
+            report_file = codecs.open("EDA.html",'r')
+            page = report_file.read()
+            components.html(page, width=1000,height=1000, scrolling=True)
 
-       
-
+    
     #説明変数の選択
+
     st.sidebar.markdown("### 3. 説明変数の選択")
     unique_columns = df.drop(columns = [target]).columns.values
     cols = st.sidebar.multiselect("",unique_columns,[])
@@ -76,6 +101,31 @@ if uploaded_file is not None:
         st.sidebar.write("※ホールドアウト用のデータが準備できる場合、別途準備してください")
 
         if st.sidebar.button('モデル作成開始'):
+
+            # check process    
+            if df[target].isnull().any() == "True":
+                st.write("errorです: 目的変数に欠損が含まれております。欠損が内容にデータを準備してください")
+                st.stop()
+            
+            if df[target].dtypes != "float64" and df[target].dtypes != "int64":
+                try:
+                    df[target] = df[target].astype("float64")
+                except:
+                    st.write("errorです: 目的変数にカテゴリが含まれている可能性があります。データを確認し、再度データを取り込んでください")
+                    st.stop()
+                df[target] = df[target].astype("float64")
+
+            for c in cols:
+                if df[c].dtypes != "float64" and df[c].dtypes != "int64":
+                    try:
+                        df[c] = df[c].astype("float64")
+                    except:
+                        st.write("errorです: ",c,"にカテゴリが含まれている可能性があります。データを確認して、再度データを取り込んでください")
+                        st.stop()
+                    df[c] = df[c].astype("float64")
+
+                
+
             with st.spinner('実行中...'):   
                 Y = df[target]
                 X = df[cols]
