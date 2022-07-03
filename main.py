@@ -50,41 +50,8 @@ if uploaded_file is not None:
         df.columns
     )
 
-    st.markdown("# Step 1: データの確認") 
     st.dataframe(df)
     st.markdown(df.shape)
-
-
-
-    
-    # EDAの実行
-    st.sidebar.markdown("### 3. データの確認")
-    st.sidebar.markdown("データの確認を行う場合は、下記の実行ボタンを押してください")
-
-    if st.sidebar.button('実行する'):
-
-        # check process    
-        if df[target].isnull().any() == "True":
-            st.write("errorです: 目的変数に欠損が含まれております。欠損が内容にデータを準備してください")
-            st.stop()
-
-
-        if df[target].dtypes != "float64" and df[target].dtypes != "int64":
-            try:
-                df[target] = df[target].astype("float64")
-            except:
-                st.write("errorです: 目的変数にカテゴリが含まれている可能性があります。データを確認し、再度データを取り込んでください")
-                st.stop()
-            df[target] = df[target].astype("float64")
-
-        with st.spinner('実行中...'):            
-            feature_config = sv.FeatureConfig(skip=[], force_num = [],force_cat=[],force_text=[])
-            my_report = sv.analyze(df, target_feat= target,feat_cfg=feature_config, pairwise_analysis="on")
-            my_report.show_html("EDA.html")
-            report_file = codecs.open("EDA.html",'r')
-            page = report_file.read()
-            components.html(page, width=1000,height=1000, scrolling=True)
-
     
     #説明変数の選択
 
@@ -92,8 +59,6 @@ if uploaded_file is not None:
     unique_columns = df.drop(columns = [target]).columns.values
     cols = st.sidebar.multiselect("",unique_columns,[])
     
-
-    st.markdown("# Step 2: モデル構築") 
     #モデル構築
     st.sidebar.markdown("### 4. モデル作成開始")
     if cols is not None:
